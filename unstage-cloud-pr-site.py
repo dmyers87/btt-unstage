@@ -1,12 +1,13 @@
 from kubernetes.client.exceptions import ApiException
 from lib.cli import get_pr_number
 from lib.github import get_cloud_pr, extract_monikers_from_cloud_pr
-from lib.db import delete_db
+from lib.db import delete_db, get_db_connection
 from lib.k8s import delete_solr_core, delete_deployment, delete_redis_keys, delete_namespace
 from kubernetes import client as k8s_client
 
-pr_number = get_pr_number()
+db_connection = get_db_connection()
 
+pr_number = get_pr_number()
 pr = get_cloud_pr(pr_number)
 
 for moniker in extract_monikers_from_cloud_pr(pr):
@@ -15,19 +16,24 @@ for moniker in extract_monikers_from_cloud_pr(pr):
 
     db_name_format = f'{moniker}_pr{pr_number}'
     
-    print('- solr')
-    print(f'attempting to delete solr core {db_name_format}')
-    solr_core_command_response = delete_solr_core(db_name_format)
-    print(solr_core_command_response)
+    # print('- solr')
+    # print(f'attempting to delete solr core {db_name_format}')
+    # solr_core_command_response = delete_solr_core(db_name_format)
+    # print(solr_core_command_response)
+    # print('')
     
     print('- database')
     print(f'attempting to delete database {db_name_format}')
-    delete_db(db_name_format)
+    try:
+        delete_db(db_name_format, db_connection)
+    except Exception as error:
+        if str(error) == "NO DATABASE":
+            print(f'no database to delete!')
+    print('')
 
     print('- redis')
     print(f'attempting to delete redis keys belonging to {db_name_format}')
     delete_redis_keys(db_name_format)
-
     print('')
 
 print(f'=== namespace & deployment ===')
@@ -43,6 +49,7 @@ except k8s_client.ApiException as error:
         print(f'no deployment to delete!')
     else:
         raise error
+print('')
 
 print(f'attempting to delete namespace {namespace}')
 try:
@@ -53,6 +60,8 @@ except k8s_client.ApiException as error:
         
     else:
         raise error
+
+db_connection.close()
 
 
 
