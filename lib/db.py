@@ -1,24 +1,37 @@
-from lib.env import in_cluster
-
+from lib.cli import is_dry_run
+from os import getenv
 import mysql.connector as mysql
 
-DEV_GCP_DB_HOST = '35.226.23.238'
+DB_HOST = getenv('DB_HOST') 
+if not DB_HOST:
+    raise Exception("DB_HOST required")
+
 DB_USER = "root"
 DB_PWD = "DXtUqdOg5L"
 
 def delete_db(db_name: str):
     db = mysql.connect(
-        host=DEV_GCP_DB_HOST,
+        host=DB_HOST,
         user=DB_USER,
         passwd=DB_PWD
     )
 
-    if in_cluster():
-        sql = db.cursor()
-        sql.execute(f'DROP DATABASE IF EXISTS {db_name}')
-        sql.execute(f'DROP USER IF EXISTS {db_name}')
-        sql.close()
+    if is_dry_run():
+        print(f'dry run: db conection valid, would be deleting database {db_name}')
     else:
-        print(f'test, would be deleting database {db_name}')
+        sql = db.cursor()
 
+        sql.execute(f'SHOW DATABASES LIKE \'{db_name}\'')        
+        existing_db = sql.fetchone()
+
+        if existing_db is None:
+            print('no database to delete!')
+        else:
+            print(f'dropping database {db_name}')
+            sql.execute(f'DROP DATABASE {db_name}')
+        
+        print(f'dropping database user if exists')
+        sql.execute(f'DROP USER IF EXISTS {db_name}')
+
+        sql.close()
     db.close()

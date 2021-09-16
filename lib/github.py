@@ -8,7 +8,6 @@ if not GITHUB_ACCESS_TOKEN:
 
 CLOUD_REPO_NAME = 'PropertyBrands/btt-ngt-d7'
 
-
 def get_cloud_pr(pr_number: int) -> PullRequest:
     return Github(GITHUB_ACCESS_TOKEN).get_repo(CLOUD_REPO_NAME).get_pull(pr_number)
 
