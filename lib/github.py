@@ -1,8 +1,13 @@
 import re
+from os import getenv
 from github import Github, PullRequest
 
-GITHUB_ACCESS_TOKEN="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"
+GITHUB_ACCESS_TOKEN = getenv('GITHUB_ACCESS_TOKEN')
+if not GITHUB_ACCESS_TOKEN:
+    raise Exception("GITHUB_ACCESS_TOKEN required")
+
 CLOUD_REPO_NAME = 'PropertyBrands/btt-ngt-d7'
+
 
 def get_cloud_pr(pr_number: int) -> PullRequest:
     return Github(GITHUB_ACCESS_TOKEN).get_repo(CLOUD_REPO_NAME).get_pull(pr_number)
