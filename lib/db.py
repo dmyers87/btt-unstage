@@ -7,20 +7,20 @@ class NoDatabaseException(Exception):
 
 class DBHelper():
 
-    def __init__(self, db_host, db_user, db_pw, dry_run=True):
+    def __init__(self, host: str, user: str, pw: str, dry_run=True):
 
-        self.db_host = db_host
-        self.db_user = db_user
-        self.db_pw = db_pw
+        self.host = host
+        self.user = user
+        self.pw = pw
         self.dry_run = dry_run
 
-        self.db_connection = self.create_db_connection(
-            self.db_host, self.db_user, self.db_pw)
+        self.connection = self.create_connection(
+            self.host, self.user, self.pw)
 
-    def get_db_connection(self):
-        return self.db_connection
+    def get_connection(self):
+        return self.connection
 
-    def create_db_connection(self, host, user, password) -> mysql.MySQLConnection:
+    def create_connection(self, host: str, user: str, password: str) -> mysql.MySQLConnection:
 
         return mysql.connect(
             host=host,
@@ -28,19 +28,19 @@ class DBHelper():
             passwd=password
         )
 
-    def delete_db(self, db_name: str, db_connection: mysql.MySQLConnection):
+    def delete_db(self, name: str):
 
         if not self.dry_run:
 
-            sql = self.db_connection.cursor()
+            sql = self.connection.cursor()
 
-            sql.execute(f'SHOW DATABASES LIKE \'{db_name}\'')
+            sql.execute(f'SHOW DATABASES LIKE \'{name}\'')
 
             if not sql.fetchone():
                 raise NoDatabaseException()
 
-            sql.execute(f'DROP DATABASE {db_name}')
-            sql.execute(f'DROP USER IF EXISTS {db_name}')
+            sql.execute(f'DROP DATABASE {name}')
+            sql.execute(f'DROP USER IF EXISTS {name}')
             sql.close()
 
             return True
