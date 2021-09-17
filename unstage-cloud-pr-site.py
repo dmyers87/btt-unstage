@@ -1,4 +1,5 @@
-from lib import k8s, db, cli, github
+from lib import k8s, db, cli
+from lib.github import GithubHelper
 
 pr_number = cli.get_pr_number()
 pr = github.get_cloud_pr(pr_number)
