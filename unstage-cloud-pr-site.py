@@ -1,66 +1,60 @@
-from kubernetes.client.exceptions import ApiException
-from lib.cli import get_pr_number
-from lib.github import get_cloud_pr, extract_monikers_from_cloud_pr
-from lib.db import delete_db, get_db_connection
-from lib.k8s import delete_solr_core, delete_deployment, delete_redis_keys, delete_namespace
-from kubernetes import client as k8s_client
+from lib import k8s, db, cli, github
 
-db_connection = get_db_connection()
+pr_number = cli.get_pr_number()
+pr = github.get_cloud_pr(pr_number)
+pr_monikers = github.extract_monikers_from_cloud_pr(pr)
 
-pr_number = get_pr_number()
-pr = get_cloud_pr(pr_number)
+if pr_monikers:
+    db_connection = db.create_db_connection()
+    redis_connection = k8s.create_redis_connection()
 
-for moniker in extract_monikers_from_cloud_pr(pr):
-
+for moniker in pr_monikers:
     print(f'=== {moniker.upper()} ===')
 
-    db_name_format = f'{moniker}_pr{pr_number}'
+    build_id = f'{moniker}_pr{pr_number}'
     
-    # print('- solr')
-    # print(f'attempting to delete solr core {db_name_format}')
-    # solr_core_command_response = delete_solr_core(db_name_format)
-    # print(solr_core_command_response)
-    # print('')
-    
-    print('- database')
-    print(f'attempting to delete database {db_name_format}')
     try:
-        delete_db(db_name_format, db_connection)
+        print('- solr')
+        core_name = f'{moniker}-pr{pr_number}'
+        print(f'deleting solr core {core_name}')
+        print(k8s.delete_solr_core(core_name))
+    except k8s.SolrCoreNotFoundException:
+        print(f'solr core {core_name} does not exist, cannot delete')
+    
+    try:
+        print('- database')
+        print(f'attempting to delete database {build_id}')
+        db.delete_db(build_id, db_connection)
+    except db.NoDatabaseException:
+        print(f'database {build_id} does not exist, cannot delete')
+    
+    try:
+        print('- redis')
+        pr_keys = redis_connection.keys(f'{build_id}:*')
+        if pr_keys:
+            print(f'deleting {len(pr_keys)} keys with pattern "{build_id}:*"')
+            redis_connection.delete(*pr_keys)
+        else:
+            print(f'found 0 keys with pattern "{build_id}:*"')
     except Exception as error:
-        if str(error) == "NO DATABASE":
-            print(f'no database to delete!')
-    print('')
-
-    print('- redis')
-    print(f'attempting to delete redis keys belonging to {db_name_format}')
-    delete_redis_keys(db_name_format)
-    print('')
-
-print(f'=== namespace & deployment ===')
-
+        print('Error', error)
+    
+print(f'=== deleting pr namespace & deployment ===')
 namespace = f'ngt-pr{pr_number}'
-deployment = f'pr{pr_number}-cloud'
 
-print(f'attempting to delete deployment {deployment}')
 try:
-    delete_deployment(namespace=namespace, deployment=deployment)
-except k8s_client.ApiException as error:
-    if (error.status == 404):
-        print(f'no deployment to delete!')
-    else:
-        raise error
-print('')
+    deployment = f'pr{pr_number}-cloud'
+    print(f'deleting deployment {deployment}')
+    k8s.delete_deployment(namespace, deployment)
+except k8s.ClusterResourceNotFoundException as error:
+    print(f'deployment does not exist, cannot delete')
 
-print(f'attempting to delete namespace {namespace}')
 try:
-    delete_namespace(namespace)
-except k8s_client.ApiException as error:
-    if (error.status == 404):
-        print(f'no namespace to delete!')
+    print(f'deleting namespace {namespace}')
+    k8s.delete_namespace(namespace)
+except k8s.ClusterResourceNotFoundException as error:
+    print(f'namespace does not exist, cannot delete')
         
-    else:
-        raise error
-
 db_connection.close()
 
 
