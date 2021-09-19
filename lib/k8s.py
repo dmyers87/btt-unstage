@@ -1,6 +1,4 @@
-from os.path import abspath
 from kubernetes import client as k8s_client, config as k8s_config, stream as k8s_stream
-from kubernetes.config.kube_config import load_kube_config
 
 
 class K8sHelper():
@@ -16,11 +14,6 @@ class K8sHelper():
 
     def load_config_from_system(self):
         self.k8s_config = k8s_config.load_kube_config()
-        self._generate_api_clients()
-
-    def load_config_from_path(self, path: str):
-        self.k8s_config = k8s_config.load_kube_config(
-            config_file=abspath(path))
         self._generate_api_clients()
 
     def _generate_api_clients(self):

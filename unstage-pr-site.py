@@ -23,24 +23,33 @@ def main():
                              help='is site CLOUD or PRO', choices=['CLOUD', 'PRO'])
     args_parser.add_argument(
         '--load-kube-config-from-cluster', action='store_true')
-    args_parser.add_argument(
-        '--load-kube-config-from-path', type=str, default=None)
     args_parser.add_argument('--no-dry-run', action='store_true')
     args = args_parser.parse_args()
 
-    load_kube_config_from_cluster = args.load_kube_config_from_cluster
-    load_kube_config_from_path = args.load_kube_config_from_path
+    pr_monikers = [prm.strip().lower()
+                   for prm in args.pr_monikers.strip().split(',')]
+    site_type = args.site_type
 
-    if load_kube_config_from_cluster and load_kube_config_from_path:
-        raise Exception(
-            f'Cannot load kube config from cluster AND from path, use one or leave blank to load from system .kube/config file')
+    if site_type == "PRO":
+        if len(pr_monikers) > 1:
+            raise Exception(
+                f'PRO sites only have 1 moniker, specified {len(pr_monikers)}')
+        if len(pr_monikers[0]) != 3:
+            raise Exception(
+                f'PRO monikers should have 3 characters, not {len(pr_monikers[0])}')
 
-    pr_monikers = [m.strip() for m in args.pr_monikers.strip().split(',')]
-    # should validate here that pr_monikers format and length make sense
-    # according to the site_type arg
+    if site_type == "CLOUD":
+        for pr_moniker in pr_monikers:
+            if pr_moniker[0] != 'n':
+                raise Exception(
+                    f'CLOUD monikers start with n, {pr_moniker} does not')
+            if len(pr_moniker) != 4:
+                raise Exception(
+                    f'CLOUD monikers should have 4 characters, {pr_moniker} does not')
 
     pr_number = args.pr_number
-    site_type = args.site_type
+
+    load_kube_config_from_cluster = args.load_kube_config_from_cluster
 
     namespace = f'{"ngt" if site_type == "CLOUD" else pr_monikers[0] }-pr{pr_number}'
 
@@ -60,8 +69,6 @@ def main():
     k8s_solr = K8sHelper('solr', dry_run=is_dry_run)
     if load_kube_config_from_cluster:
         k8s_solr.load_config_from_cluster()
-    elif load_kube_config_from_path:
-        k8s_solr.load_config_from_path(load_kube_config_from_path)
     else:
         k8s_solr.load_config_from_system()
 
@@ -104,8 +111,6 @@ def main():
     k8s_resources = K8sHelper(namespace, dry_run=is_dry_run)
     if load_kube_config_from_cluster:
         k8s_resources.load_config_from_cluster()
-    elif load_kube_config_from_path:
-        k8s_resources.load_config_from_path(load_kube_config_from_path)
     else:
         k8s_resources.load_config_from_system()
 
