@@ -33,7 +33,7 @@ def main():
     if site_type == "PRO":
         if len(pr_monikers) > 1:
             raise Exception(
-                f'PRO sites only have 1 moniker, specified {len(pr_monikers)} ')
+                f'PRO sites only have 1 moniker, specified {len(pr_monikers)}')
         if len(pr_monikers[0]) != 3:
             raise Exception(
                 f'PRO monikers should have 3 characters, not {len(pr_monikers[0])}')
