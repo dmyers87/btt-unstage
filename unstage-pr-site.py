@@ -100,7 +100,7 @@ def main():
             pr_keys = redis.get_keys(pr_key_pattern)
             if pr_keys:
                 print(
-                    f'deleting {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
+                    f'attempting to delete {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
                 redis.delete_keys(pr_keys)
                 print(
                     f'deleted {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
@@ -118,14 +118,14 @@ def main():
 
     try:
         deployment = f'pr{pr_number}-cloud'
-        print(f'deleting deployment {deployment}')
+        print(f'attempting to delete deployment {deployment}')
         k8s_resources.delete_deployment(deployment)
         print(f'deleted deployment {deployment}')
     except ClusterResourceNotFoundException as error:
         print(f'deployment does not exist, cannot delete')
 
     try:
-        print(f'deleting namespace {namespace}')
+        print(f'attempting to delete {namespace}')
         k8s_resources.delete_namespace()
         print(f'deleted namespace {namespace}, terminating')
     except ClusterResourceNotFoundException as error:
