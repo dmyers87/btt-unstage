@@ -1,7 +1,7 @@
 # #!/bin/bash
 
 kubectl --context "gke_btc1-233019_us-central1-c_btc2-dev" \
-    run unstager-test \
+    run unstager \
     --rm \
     -i \
     --restart "Never" \
@@ -12,6 +12,7 @@ kubectl --context "gke_btc1-233019_us-central1-c_btc2-dev" \
     --env="DB_HOST=devdb-int.stg.rezfusion.com" \
     --env="DB_PASSWORD=DXtUqdOg5L" \
     --env="REDIS_HOST=redis-master.redis.svc.cluster.local" \
-    --command -- python unstage-pr-site.py $1 $2 $3 $4 $5
+    --command -- python unstage-pr-site.py npab 1041 CLOUD --no-dry-run --load-kube-config-from-cluster
     
+
 

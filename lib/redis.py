@@ -14,5 +14,5 @@ class RedisHelper():
     def get_keys(self, redis_keys: str):
         return self.redis_connection.keys(redis_keys)
 
-    def delete_keys(self, **redis_keys: list):
-        return self.redis_connection.delete(**redis_keys)
+    def delete_keys(self, redis_keys: list):
+        return self.redis_connection.delete(*redis_keys)

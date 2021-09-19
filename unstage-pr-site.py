@@ -96,12 +96,14 @@ def main():
 
         try:
             print('- redis')
-            pr_key_pattern = '{build_id}:*'
+            pr_key_pattern = f'{build_id}:*'
             pr_keys = redis.get_keys(pr_key_pattern)
             if pr_keys:
                 print(
                     f'deleting {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
-                redis.delete_keys(*pr_keys)
+                redis.delete_keys(pr_keys)
+                print(
+                    f'deleted {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
             else:
                 print(f'found 0 keys with pattern "{pr_key_pattern}"')
         except Exception as error:
