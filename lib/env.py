@@ -1,13 +1,29 @@
 from os import getenv
 
+
 class EnvVarNotSuppliedException(Exception):
     pass
 
-def get_env_var(var: str):
-    env_var = getenv(var)
-    if not env_var:
-        raise EnvVarNotSuppliedException(f'{var} not supplied')
-    return env_var
-        
 
+class EnvReader():
+    vars = {}
 
+    def __init__(self, *args):
+
+        missing_vars = []
+
+        for arg in args:
+
+            value = getenv(arg)
+
+            if not value:
+
+                missing_vars.append(arg)
+
+            self.vars[arg] = value
+
+        if missing_vars:
+            raise EnvVarNotSuppliedException(f'{missing_vars} not supplied')
+
+    def get_var(self, var_name: str) -> dict:
+        return self.vars[var_name]
