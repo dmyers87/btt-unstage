@@ -81,7 +81,7 @@ def main():
         core_name = f'{moniker}-pr{pr_number}'
         print(f'deleting solr core {core_name}')
         solr_cmd_response = k8s_solr.execute_command_in_pod(
-            pod_name='solr-0',
+            pod_name='solr-1',
             command=['solr', 'delete', '-c', core_name]
         )
         print(solr_cmd_response.strip())
