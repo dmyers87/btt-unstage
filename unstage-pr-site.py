@@ -86,13 +86,22 @@ def main():
         )
         print(solr_cmd_response.strip())
 
+        print('- database')
         try:
-            print('- database')
             print(f'attempting to delete database {build_id}')
             db.delete_db(name=build_id)
             print(f'deleted database {build_id}')
         except NoDatabaseException:
             print(f'database {build_id} does not exist, cannot delete')
+
+        if site_type == "CLOUD":
+            ngt_db_name = f'ngt-pr{pr_number}'
+            try:
+                print(f'cloud so attempting to delete database {ngt_db_name}')
+                db.delete_db(name=ngt_db_name)
+                print(f'deleted database {ngt_db_name}')
+            except NoDatabaseException:
+                print(f'database {ngt_db_name} does not exist, cannot delete')
 
         try:
             print('- redis')
