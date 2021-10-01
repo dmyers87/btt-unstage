@@ -95,7 +95,7 @@ def main():
             print(f'database {build_id} does not exist, cannot delete')
 
         if site_type == "CLOUD":
-            ngt_db_name = f'ngt-pr{pr_number}'
+            ngt_db_name = f'ngt_pr{pr_number}'
             try:
                 print(f'cloud so attempting to delete database {ngt_db_name}')
                 db.delete_db(name=ngt_db_name)
