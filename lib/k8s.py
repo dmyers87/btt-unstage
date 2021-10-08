@@ -47,7 +47,6 @@ class K8sHelper():
             except k8s_client.ApiException as error:
                 if (error.status == 404):
                     raise ClusterResourceNotFoundException()
-
             return True
 
         return False
@@ -61,6 +60,16 @@ class K8sHelper():
                     raise ClusterResourceNotFoundException()
             return True
         return False
+
+    def get_secret(self, secret: str) -> k8s_client.V1Secret:
+        try:
+            return self.k8s_core_v1_api.read_namespaced_secret(
+                name=secret,
+                namespace=self.namespace
+            )
+        except k8s_client.ApiException as error:
+            if (error.status == 404):
+                raise ClusterResourceNotFoundException()
 
 
 class ClusterResourceNotFoundException(Exception):

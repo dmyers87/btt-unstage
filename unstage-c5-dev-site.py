@@ -1,6 +1,6 @@
+from base64 import b64decode
 from argparse import ArgumentParser
 from lib.db import DBHelper, NoDatabaseException
-from lib.redis import RedisHelper
 from lib.env import EnvReader
 from lib.k8s import K8sHelper, ClusterResourceNotFoundException
 
@@ -8,7 +8,6 @@ from lib.k8s import K8sHelper, ClusterResourceNotFoundException
 def main():
 
     env_reader = EnvReader(
-        'DB_HOST',
         'DB_USER',
         'DB_PASSWORD',
     )
@@ -37,13 +36,6 @@ def main():
     is_dry_run = not args.no_dry_run
 
     print(f'DRY RUN: {is_dry_run}')
-
-    db = DBHelper(
-        host=env_reader.get_var('DB_HOST'),
-        user=env_reader.get_var('DB_USER'),
-        pw=env_reader.get_var('DB_PASSWORD'),
-        dry_run=is_dry_run
-    )
 
     for c5_moniker in c5_monikers:
 
@@ -79,6 +71,19 @@ def main():
 
         for c5_db_suffix in ['_dev', '_dev_tac']:
 
+            db_secret = k8s_resources.get_secret(secret=f'{c5_moniker}-dev-db')
+            db_host_b64_encoded = db_secret.data.get('host')
+            db_host = b64decode(db_host_b64_encoded).decode('utf-8')
+
+            print(f'using database host {db_host}')
+
+            db = DBHelper(
+                host=db_host,
+                user=env_reader.get_var('DB_USER'),
+                pw=env_reader.get_var('DB_PASSWORD'),
+                dry_run=is_dry_run
+            )
+
             c5_db = f'{c5_moniker}{c5_db_suffix}'
 
             try:
@@ -88,7 +93,7 @@ def main():
             except NoDatabaseException:
                 print(f'database {c5_db} does not exist, cannot delete')
 
-    db.connection.close()
+            db.connection.close()
 
 
 main()
