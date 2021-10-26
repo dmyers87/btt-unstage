@@ -34,10 +34,9 @@ def main():
         pr_key_pattern = f'api_pr{pr_number}:*'
         pr_keys = redis.get_keys(pr_key_pattern)
         if pr_keys:
+            print(
+                f'attempting to delete {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
             if not is_dry_run:
-                print(
-                    f'attempting to delete {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
-
                 redis.delete_keys(pr_keys)
                 print(
                     f'deleted {len(pr_keys)} keys with pattern "{pr_key_pattern}"')
