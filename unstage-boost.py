@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from lib.db import DBHelper, NoDatabaseException
 from lib.redis import RedisHelper
 from lib.env import EnvReader
 from lib.k8s import K8sHelper, ClusterResourceNotFoundException
