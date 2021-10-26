@@ -39,17 +39,13 @@ class K8sHelper():
 
     def get_deployments(self):
 
-        if not self.dry_run:
-            try:
-                return self.k8s_apps_v1_api.list_namespaced_deployment(
-                    namespace=self.namespace,
-                )
-            except k8s_client.ApiException as error:
-                if (error.status == 404):
-                    raise ClusterResourceNotFoundException()
-
-        else:
-            return []
+        try:
+            return self.k8s_apps_v1_api.list_namespaced_deployment(
+                namespace=self.namespace,
+            )
+        except k8s_client.ApiException as error:
+            if (error.status == 404):
+                raise ClusterResourceNotFoundException()
 
     def delete_deployment(self, deployment: str):
         if not self.dry_run:

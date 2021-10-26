@@ -29,9 +29,10 @@ def main():
 
     redis = RedisHelper(host=env_reader.get_var('REDIS_HOST'))
 
+    print('- redis')
+    pr_key_pattern = f'api_pr{pr_number}:*'
+
     try:
-        print('- redis')
-        pr_key_pattern = f'api_pr{pr_number}:*'
         pr_keys = redis.get_keys(pr_key_pattern)
         if pr_keys:
             print(
@@ -52,22 +53,23 @@ def main():
     else:
         k8s_resources.load_config_from_system()
 
-    print(k8s_resources.get_deployments())
+    deployments = k8s_resources.get_deployments()
 
-    # try:
-    #     deployment = f'pr{pr_number}-cloud'
-    #     print(f'attempting to delete deployment {deployment}')
-    #     k8s_resources.delete_deployment(deployment)
-    #     print(f'deleted deployment {deployment}')
-    # except ClusterResourceNotFoundException as error:
-    #     print(f'deployment does not exist, cannot delete')
+    for deployment in deployments.items:
+        try:
+            print(
+                f'attempting to delete deployment {deployment.metadata.name}')
+            k8s_resources.delete_deployment(deployment.metadata.name)
+            print(f'deleted deployment {deployment.metadata.name}')
+        except ClusterResourceNotFoundException as error:
+            print(f'deployment does not exist, cannot delete')
 
-    # try:
-    #     print(f'attempting to delete {namespace}')
-    #     k8s_resources.delete_namespace()
-    #     print(f'deleted namespace {namespace}, terminating')
-    # except ClusterResourceNotFoundException as error:
-    #     print(f'namespace does not exist, cannot delete')
+    try:
+        print(f'attempting to delete {namespace}')
+        k8s_resources.delete_namespace()
+        print(f'deleted namespace {namespace}, terminating')
+    except ClusterResourceNotFoundException as error:
+        print(f'namespace does not exist, cannot delete')
 
 
 main()
