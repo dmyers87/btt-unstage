@@ -1,12 +1,18 @@
 from argparse import ArgumentParser
 from lib.redis import RedisHelper
 from lib.env import EnvReader
+from lib.db import DBHelper, NoDatabaseException
 from lib.k8s import K8sHelper, ClusterResourceNotFoundException
 
 
 def main():
 
-    env_reader = EnvReader('REDIS_HOST')
+    env_reader = EnvReader(
+        'DB_HOST',
+        'DB_USER',
+        'DB_PASSWORD',
+        'REDIS_HOST'
+    )
 
     args_parser = ArgumentParser()
     args_parser.add_argument('pr_number', type=int,
@@ -26,12 +32,11 @@ def main():
     namespace = f'api-pr{pr_number}'
 
     print(f'=== {namespace.upper()} ===')
-
-    redis = RedisHelper(host=env_reader.get_var('REDIS_HOST'))
+    build_id = f'api_pr{pr_number}'
 
     print('- redis')
-    pr_key_pattern = f'api_pr{pr_number}:*'
-
+    redis = RedisHelper(host=env_reader.get_var('REDIS_HOST'))
+    pr_key_pattern = f'{build_id}:*'
     try:
         pr_keys = redis.get_keys(pr_key_pattern)
         if pr_keys:
@@ -45,6 +50,21 @@ def main():
             print(f'found 0 keys with pattern "{pr_key_pattern}"')
     except Exception as error:
         print('Error', error)
+
+    print('- database')
+    db = DBHelper(
+        host=env_reader.get_var('DB_HOST'),
+        user=env_reader.get_var('DB_USER'),
+        pw=env_reader.get_var('DB_PASSWORD'),
+        dry_run=is_dry_run
+    )
+
+    try:
+        print(f'attempting to delete database {build_id}')
+        db.delete_db(name=build_id)
+        print(f'deleted database {build_id}')
+    except NoDatabaseException:
+        print(f'database {build_id} does not exist, cannot delete')
 
     print(f'=== deleting pr namespace & deployment ===')
     k8s_resources = K8sHelper(namespace, dry_run=is_dry_run)
