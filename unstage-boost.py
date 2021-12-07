@@ -8,9 +8,9 @@ from lib.k8s import K8sHelper, ClusterResourceNotFoundException
 def main():
 
     env_reader = EnvReader(
-        'DB_HOST',
-        'DB_USER',
-        'DB_PASSWORD',
+        # 'DB_HOST',
+        # 'DB_USER',
+        # 'DB_PASSWORD',
         'REDIS_HOST'
     )
 
@@ -51,20 +51,20 @@ def main():
     except Exception as error:
         print('Error', error)
 
-    print('- database')
-    db = DBHelper(
-        host=env_reader.get_var('DB_HOST'),
-        user=env_reader.get_var('DB_USER'),
-        pw=env_reader.get_var('DB_PASSWORD'),
-        dry_run=is_dry_run
-    )
+    # print('- database')
+    # db = DBHelper(
+    #     host=env_reader.get_var('DB_HOST'),
+    #     user=env_reader.get_var('DB_USER'),
+    #     pw=env_reader.get_var('DB_PASSWORD'),
+    #     dry_run=is_dry_run
+    # )
 
-    try:
-        print(f'attempting to delete database {build_id}')
-        db.delete_db(name=build_id)
-        print(f'deleted database {build_id}')
-    except NoDatabaseException:
-        print(f'database {build_id} does not exist, cannot delete')
+    # try:
+    #     print(f'attempting to delete database {build_id}')
+    #     db.delete_db(name=build_id)
+    #     print(f'deleted database {build_id}')
+    # except NoDatabaseException:
+    #     print(f'database {build_id} does not exist, cannot delete')
 
     print(f'=== deleting pr namespace & deployment ===')
     k8s_resources = K8sHelper(namespace, dry_run=is_dry_run)
